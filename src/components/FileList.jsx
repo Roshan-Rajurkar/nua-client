@@ -26,7 +26,7 @@ const FileList = ({ files = [], onShare }) => {
                 Share
               </button>
               <button
-                onClick={() => downloadFile(file, user)}
+                onClick={() => downloadFile(file._id, user)}
                 className="px-3 py-1 bg-gray-700 text-white rounded"
               >
                 Download

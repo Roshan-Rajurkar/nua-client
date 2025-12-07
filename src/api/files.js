@@ -20,24 +20,46 @@ export const getFiles = async (user) => {
   return res.json();
 };
 
-export const downloadFile = async (file, user) => {
-  const res = await fetch(
-    `${process.env.REACT_APP_API_URL}/files/${file._id}`,
-    {
+export const downloadFile = async (id, user) => {
+  try {
+    const res = await fetch(`${process.env.REACT_APP_API_URL}/files/${id}`, {
       headers: {
         Authorization: `Bearer ${user.token}`,
       },
+    });
+
+    if (res.status === 403) {
+      return { success: false, message: "Access denied" };
     }
-  );
 
-  const blob = await res.blob();
-  const url = window.URL.createObjectURL(blob);
+    if (res.status === 404) {
+      return { success: false, message: "File not found" };
+    }
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = file.originalName;
-  a.click();
-  window.URL.revokeObjectURL(url);
+    if (!res.ok) {
+      return { success: false, message: "Something went wrong" };
+    }
+
+    let fileName = `${id}_download`;
+    const dispo = res.headers.get("Content-Disposition");
+    if (dispo && dispo.includes("filename=")) {
+      fileName = dispo.split("filename=")[1].replace(/"/g, "");
+    }
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+
+    return { success: true, message: `${fileName} downloaded successfully` };
+  } catch (error) {
+    return { success: false, message: error.message || "Download failed" };
+  }
 };
 
 export const shareFileAPI = async (fileId, userIds, user) => {
